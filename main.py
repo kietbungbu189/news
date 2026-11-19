@@ -1,87 +1,37 @@
-from src.config import RAW_CSV
-from src.extract import read_fact_csv
-from src.transform import build_dim_supplier
-from src.transform import build_dim_logistics
-from src.transform import build_dim_product
-from src.transform import attach_keys
-from src.config import DB
-from src.load import create_db
-from src.validate import check_relationship
-from src.validate import validate_warehouse
-from src.analytics import check_low_stock
-from src.analytics import priority_stock
-from src.analytics import classify_stock
-from src.analytics import total_revenue
-from src.analytics import broadcast
-from src.analytics import shipping_costs
-from src.analytics import boxes_required
+from src.config import WEBSITE
+from src.extract import extract_website
+from src.extract import scrape_books
+from src.load import create_csv
+import requests
+from src.transform import parse_book
+from src.config import OUTPUT_CSV
+import pandas as pd
 from src.log import log_analysis
-from src.analytics import below_20_stock
-from src.transform import options
-from src.analytics import restock
-from src.optimize import optimize
+from src.analytics import graph
+from src.analytics import top_10
+from src.analytics import rating_count
 
 def main():
-    print(f"Printing the first 5 rows of {RAW_CSV}")
+    session_main = requests.Session()
+#Dependency Injection  
+    all_books = []
+    for pg in range(1, 6):
+        file_or_data_main = scrape_books(session_main, pg)
+        print(file_or_data_main[:500])
+        
+        data_dict = parse_book(file_or_data_main)
+#data_dict is a list of 20 books. .append() puts the whole box inside all_books, creating...
+#... 5 nested lists (which makes pd.DataFrame() build a broken 5-row × 20-column table)        
+        all_books.extend(data_dict)
+    df = pd.DataFrame(all_books)
 
-    raw = read_fact_csv(RAW_CSV)
-    suppliers = build_dim_supplier(raw)
-    print(f"Raw rows: {len(raw)}")
-    print(f"Supplier-location combinations: {len(suppliers)}")
-    print(suppliers.head())
+    create_csv(df, OUTPUT_CSV)
 
-    logistics = build_dim_logistics(raw)
-    print(f"Raw rows: {len(raw)}")
-    print(f"Shipping carriers-Transportation modes-Routes combinations: {len(logistics)}")
-    print(logistics.head())
+    log_analysis(df)
 
-    products = build_dim_product(raw)
-    print(f"Raw rows: {len(raw)}")
-    print(f"SKU records: {len(products)}")
-    print(products.head())
-
-    merge1 = attach_keys(raw, suppliers, ['Supplier name', 'Location'])
-    merge2 = attach_keys(merge1, logistics, ['Shipping carriers', 'Transportation modes', 'Routes'])
-    merge2 = merge2.drop(columns=['Supplier name', 'Location', 'Shipping carriers', 'Transportation modes', 'Routes', 'Product type', 'Price'])
-
-    create_db(products, logistics, suppliers, merge2)
-    
-    validate_warehouse(DB)
-
-    low_stock = check_low_stock(merge2, 'Stock levels')
-    print(low_stock.head())
-
-    priority = priority_stock(merge2, 'Stock levels', 'Number of products sold')
-    print(priority.head())
-
-    classify = merge2['Stock levels'].apply(classify_stock)
-    print(classify.head())
-
-    total = total_revenue(merge2, 'Revenue generated')
-    print(total)
-
-    profit = broadcast(merge2)
-    print(profit)
-
-    shipping = shipping_costs(merge2)
-    print(shipping.head())
-
-    boxes = boxes_required(merge2, 'Number of products sold')
-    print(boxes.head())
-
-    low_20 = below_20_stock(merge2, 'Stock levels')
-    print(low_20.head())
-    
-    log_analysis(merge2, total, low_stock)
-
-    options_to_choose = options(products, suppliers, logistics)
-    print(options_to_choose.head())
-
-    rstk = restock(low_20, 'Stock levels')
-    print(rstk.head()) 
-
-    optiz = optimize(options_to_choose, rstk, budget=10000)
-    print(optiz)
+    rate = rating_count(df)
+    top = top_10(df)
+    graph(df, top, rate)
 
 if __name__ == "__main__":
     main()
