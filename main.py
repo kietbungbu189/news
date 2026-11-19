@@ -3,7 +3,7 @@ from src.extract import extract_website
 from src.extract import scrape_news
 from src.load import create_csv
 import requests
-from src.transform import parse_book
+from src.transform import parse_news
 from src.config import OUTPUT_CSV
 import pandas as pd
 from src.log import log_analysis
