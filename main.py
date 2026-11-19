@@ -1,6 +1,6 @@
 from src.config import WEBSITE
 from src.extract import extract_website
-from src.extract import scrape_books
+from src.extract import scrape_news
 from src.load import create_csv
 import requests
 from src.transform import parse_book
@@ -16,8 +16,11 @@ def main():
 #Dependency Injection  
     all_books = []
     for pg in range(1, 6):
-        file_or_data_main = scrape_books(session_main, pg)
-        print(file_or_data_main[:500])
+        file_or_data_main = scrape_news(session_main, pg)
+        if file_or_data_main is None:
+            continue
+        else:
+            print(file_or_data_main[:500])
         
         data_dict = parse_book(file_or_data_main)
 #data_dict is a list of 20 books. .append() puts the whole box inside all_books, creating...

@@ -15,3 +15,6 @@ RATING_MAP = {
     "Four": 4,
     "Five": 5,
 }
+NEWS_WEBSITE = "https://ycombinator.com{page}"
+SOURCE_NAME = "Hacker News"
+

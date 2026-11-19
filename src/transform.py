@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
 from src.config import RATING_MAP
-from src.extract import scrape_books
+from src.extract import scrape_news
 from src.extract import extract_website
+from urllib.parse import urljoin
+from src.config import NEWS_WEBSITE
+from src.config import SOURCE_NAME
 
 ##3 flatten data
 ##flatten_data = {} a dictionary only holds 1 value per key, works for {'Timestamp': [data_from_internetorfile['timestamp']], 
@@ -12,7 +15,7 @@ from src.extract import extract_website
 ## but not for this, in this create a list instead (post 1 arrives: flatten_data['posttext'] = "Hello world"
 ##                                                then post 2 arrives: flatten_data['posttext'] = "I love Canada" -> Post 2 erases Post 1!)
 ## this does NOT create a list instead of a dictionary, this creates a LIST of dictionary
-def parse_book(html):
+def parse_news(html):
     flatten_data_list = []
 #for post in line_or_data:
 #    flatten_data_list.append({'personpost': post['account']['acct'], 'posttext': post['content'], 
@@ -61,7 +64,7 @@ def parse_book(html):
 #print("Links:", links)
 
 #this is already in "html" parameter 
-#    file_or_data_transform = scrape_books(session, page_number_parse_book)
+#    file_or_data_transform = scrape_news(session, page_number_parse_book)
     line_BeautifulSoup_parsed = BeautifulSoup(html, "html.parser")
 #if just line_BeautifulSoup_parsed, the loop only works on <html>:
 #<html><body><ul><li>Apple</li><li>Banana</li></ul></body></html>
@@ -81,34 +84,44 @@ def parse_book(html):
 #2. Keeping Each Book's Data Paired Together
 #If you only want a list of titles, you don't actually need product_pod—you could just search for soup.find_all("h3") directly.
 #However, if you want to scrape multiple details per book (like Title + Price + Star Rating), grabbing the product_pod container first is essential
-    for tag in line_BeautifulSoup_parsed.find_all("article", class_="product_pod"):
+    for tag in line_BeautifulSoup_parsed.find_all("tr", class_="athing"):
 #        print(line_or_data.strip())
 #Why we use ["title"] instead of .text: Look closely at the HTML snippet above. The visible text...
 #... between the tags (>A Light in the ...<) gets cut off with dots (...) when a book title is... 
 #... long! However, the hidden title="A Light in the Attic" attribute inside the <a ...> tag...
 #... always holds the complete, uncut book title
 #        tag_BeautifulSoup_parsed = {"title": tag.text}
-        tag_BeautifulSoup_parsed_title = tag.find("h3").find("a")["title"]
+        tag_BeautifulSoup_parsed_articleid = tag.get("id")
 #title is directly in the product_pod box but to find e.g price you have to... 
 #... open a sub-box in that named "price_colour"
-        tag_BeautifulSoup_parsed_price = tag.find("p", class_="price_color").get_text(strip=True)
-        tag_BeautifulSoup_parsed_price = float(tag_BeautifulSoup_parsed_price.replace("£", ""))
+        tag_BeautifulSoup_parsed_headline = tag.find("span", class_="titleline").find("a")
+        tag_BeautifulSoup_parsed_headline2 = tag_BeautifulSoup_parsed_headline.get_text(strip=True)
 #index [0] will give value "star-rating" as in <p class="star-rating Three">
-        tag_BeautifulSoup_parsed_rating = tag.find("p", class_="star-rating")["class"][1]
+        tag_BeautifulSoup_parsed_source = SOURCE_NAME
 #use result as key to dictionary RATING_MAP, retrieve value: db_host = config.DATABASE["host"]
 #Because you didn't write import src.config as config, calling config.RATING_MAP[...] will crash
-        tag_BeautifulSoup_parsed_rating_number = RATING_MAP[tag_BeautifulSoup_parsed_rating]
-        tag_BeautifulSoup_parsed_stock = tag.find("p", class_="instock availability").get_text(strip=True)
-        tag_BeautifulSoup_parsed_url = tag.find("h3").find("a")["href"]
+        tag_BeautifulSoup_parsed_publishat = tag.find_next_sibling("tr")
+        if tag_BeautifulSoup_parsed_publishat is None:
+                continue
+        else:        
+                tag_BeautifulSoup_parsed_publishat2 = tag_BeautifulSoup_parsed_publishat.find("span", class_="age")
+        if tag_BeautifulSoup_parsed_publishat2 is None:
+                continue
+        else:
+                tag_BeautifulSoup_parsed_publishat3 = tag_BeautifulSoup_parsed_publishat2["title"].split()
+        tag_BeautifulSoup_parsed_url = tag_BeautifulSoup_parsed_headline["href"]
+        tag_BeautifulSoup_parsed_url2 = urljoin(NEWS_WEBSITE.format(page=1), tag_BeautifulSoup_parsed_url)
+        tag_BeautifulSoup_parsed_text = tag_BeautifulSoup_parsed_headline2
 #remove the square brackets [ ] and inner curly braces { } inside .append(...) so it...
 #... appends a single dictionary instead of a list of 5 tiny dictionaries
 #removing the extra braces will cause a SyntaxError because...
 #... Python dictionaries always require ONE pair of outer curly braces { ... }
-        flatten_data_list.append({"Book title": tag_BeautifulSoup_parsed_title, 
-                                "Price": tag_BeautifulSoup_parsed_price, 
-                                "Rating": tag_BeautifulSoup_parsed_rating_number, 
-                                "Stock": tag_BeautifulSoup_parsed_stock, 
-                                "URL": tag_BeautifulSoup_parsed_url})
+        flatten_data_list.append({"Article ID": tag_BeautifulSoup_parsed_articleid, 
+                                "Title": tag_BeautifulSoup_parsed_headline2, 
+                                "Source": tag_BeautifulSoup_parsed_source, 
+                                "Publish at": tag_BeautifulSoup_parsed_publishat3, 
+                                "URL": tag_BeautifulSoup_parsed_url2,
+                                "Text": tag_BeautifulSoup_parsed_text})
     return flatten_data_list
 
 
