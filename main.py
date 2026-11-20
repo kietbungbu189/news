@@ -20,7 +20,7 @@ from src.analytics import get_sentiment
 def main():
     session_main = requests.Session()
 #Dependency Injection  
-    all_books = []
+    all_news = []
     for pg in range(1, 6):
         file_or_data_main = scrape_news(session_main, pg)
         if file_or_data_main is None:
@@ -31,8 +31,8 @@ def main():
         data_dict = parse_news(file_or_data_main)
 #data_dict is a list of 20 books. .append() puts the whole box inside all_books, creating...
 #... 5 nested lists (which makes pd.DataFrame() build a broken 5-row × 20-column table)        
-        all_books.extend(data_dict)
-    df = pd.DataFrame(all_books)
+        all_news.extend(data_dict)
+    df = pd.DataFrame(all_news)
 
 #    create_csv(df, OUTPUT_CSV)
     create_db(df, DB)
@@ -47,6 +47,8 @@ def main():
         company_sent.append(sentiment)
 #Instead, assign your company_sent list directly as a new column after the loop finishes
     mc["Company sentiment"] = company_sent
+
+    create_csv(mc, OUTPUT_CSV)
 
     log_analysis(df)
 

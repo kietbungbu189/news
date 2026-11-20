@@ -1,7 +1,7 @@
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_CSV = PROJECT_ROOT / "data" / "processed" / "books_scraped.csv"
+OUTPUT_CSV = PROJECT_ROOT / "data" / "processed" / "news_scraped.csv"
 DB = PROJECT_ROOT / "data" / "database.db"
 LOG = PROJECT_ROOT / "logs" / "log.txt"
 HIST = PROJECT_ROOT / "docs" / "histogram.png"

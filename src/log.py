@@ -8,7 +8,7 @@ def log_analysis(table):
     message = (
     f"\nanalysis logged: {log_time}"
     #or f"Run time: {x:%c}"
-    f"\nRecords of books imported to csv: {len(table)}"
+    f"\nRecords of news articles imported to csv: {len(table)}"
 #shows numbers of rows top down
     )
 #shows number of rows top down of dataframe table 
