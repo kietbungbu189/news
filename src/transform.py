@@ -108,7 +108,7 @@ def parse_news(html):
         if tag_BeautifulSoup_parsed_publishat2 is None:
                 continue
         else:
-                tag_BeautifulSoup_parsed_publishat3 = tag_BeautifulSoup_parsed_publishat2["title"].split()
+                tag_BeautifulSoup_parsed_publishat3 = tag_BeautifulSoup_parsed_publishat2["title"].split()[0]
         tag_BeautifulSoup_parsed_url = tag_BeautifulSoup_parsed_headline["href"]
         tag_BeautifulSoup_parsed_url2 = urljoin(NEWS_WEBSITE.format(page=1), tag_BeautifulSoup_parsed_url)
         tag_BeautifulSoup_parsed_text = tag_BeautifulSoup_parsed_headline2

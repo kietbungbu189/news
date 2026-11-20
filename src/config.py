@@ -15,6 +15,6 @@ RATING_MAP = {
     "Four": 4,
     "Five": 5,
 }
-NEWS_WEBSITE = "https://ycombinator.com{page}"
+NEWS_WEBSITE = "https://news.ycombinator.com/?p={page}"
 SOURCE_NAME = "Hacker News"
-
+COMPANIES = ["Apple", "Google", "Microsoft", "OpenAI", "Anthropic"]
